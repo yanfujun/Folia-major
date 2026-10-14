@@ -274,7 +274,7 @@ const DesktopSettingsSubview: React.FC<DesktopSettingsSubviewProps> = ({
                 <div className={`rounded-xl border ${settingsCardClass} overflow-hidden`}>
                     {renderRow(
                         t('options.minimizeToTray'),
-                        '点击最小化时，应用将隐藏至系统托盘。',
+                        t('options.minimizeToTrayDesc'),
                         renderToggle(minimizeToTray, () => onToggleMinimizeToTray(!minimizeToTray)),
                     )}
                     {renderRow(
@@ -289,7 +289,7 @@ const DesktopSettingsSubview: React.FC<DesktopSettingsSubviewProps> = ({
                     )}
                     {renderRow(
                         t('options.hideTaskbarIcon'),
-                        '即使主窗口处于打开状态，也不在系统任务栏显示应用，最大程度减少干扰。',
+                        t('options.hideTaskbarIconDesc'),
                         renderToggle(hideTaskbarIcon, () => onToggleHideTaskbarIcon(!hideTaskbarIcon)),
                     )}
                     {renderRow(
@@ -601,7 +601,7 @@ const DesktopSettingsSubview: React.FC<DesktopSettingsSubviewProps> = ({
                                 {t('options.aiProvider') || 'AI Provider'}
                             </div>
                             <div className="text-xs opacity-50 max-w-[420px]" style={{ color: 'var(--text-secondary)' }}>
-                                选择生成智能歌词主题效果的 AI 服务商。
+                                {t('options.lyricThemeAIProvider') || 'Select the AI provider for generating smart lyric theme effects.'}
                             </div>
                         </div>
 
@@ -729,12 +729,12 @@ const DesktopSettingsSubview: React.FC<DesktopSettingsSubviewProps> = ({
                             {electronSaveStatus === 'saved' ? (
                                 <>
                                     <Check size={14} className={successTextColor} />
-                                    <span className={successTextColor}>已保存</span>
+                                    <span className={successTextColor}>{t('options.saved') || 'Saved'}</span>
                                 </>
                             ) : electronSaveStatus === 'saving' ? (
                                 <>
                                     <Loader2 size={14} className="animate-spin" />
-                                    <span>正在保存...</span>
+                                    <span>{t('options.saving') || 'Saving...'}</span>
                                 </>
                             ) : (
                                 <span>{t('options.save') || 'Save'}</span>
