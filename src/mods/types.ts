@@ -12,6 +12,7 @@ export type ModStatus = 'loaded' | 'disabled' | 'error' | 'dependency-failed';
 export interface ModLabelMap {
     [key: string]: string | undefined;
     'zh-CN'?: string;
+    'zh-TW'?: string;
     'en'?: string;
     'in'?: string;
 }
