@@ -16,11 +16,14 @@ import { createFoliumRegistry } from './registry';
 import { omniProvidersRegistry } from './registries/omniProviders';
 import { addPonderText, localizePonderTarget, ponderTextNamespace, removePonderText } from './ponderText';
 
+import { createPlayerLayoutApi, playerLayoutSubscriptions } from './playerLayout';
+
 // src/mods/folium/experimental.ts
 // The unfrozen surfaces, each behind a manifest opt-in (`experimental`):
 //   - omni.providers: register an online music source (registries/omniProviders);
 //   - omni.hooks:     rewrite lyrics / swap audio URLs Omni resolved;
 //   - ponder.targets: add Ponder (in-app tutorial) targets for the mod's own UI.
+//   - player.layout: read native control geometry for appended mod layers.
 // Loaded lazily and only in the main window, so the export bundle never pulls
 // in the provider registry. These can change in any folium minor.
 
@@ -62,7 +65,7 @@ export const ponderTargetsRegistry = createFoliumRegistry<PonderTargetInput, Sto
 });
 
 /** Registries owned by this module, for teardown alongside the stable ones. */
-export const EXPERIMENTAL_REGISTRIES = [omniProvidersRegistry, ponderTargetsRegistry];
+export const EXPERIMENTAL_REGISTRIES = [omniProvidersRegistry, ponderTargetsRegistry, playerLayoutSubscriptions];
 
 // ---- omni.hooks: installed once, active only while some mod listens
 
@@ -90,6 +93,7 @@ installOmniResultHooks({
 
 /** The `folium.experimental` object for one mod (only the names it opted into are reachable). */
 export const createFoliumExperimental = (mod: ModRuntimeInfo): Record<string, unknown> => ({
+    'player.layout': createPlayerLayoutApi(mod.id),
     'omni.providers': Object.freeze({
         register: (def: FoliumOmniProviderDef) => omniProvidersRegistry.register(mod.id, def),
     }),

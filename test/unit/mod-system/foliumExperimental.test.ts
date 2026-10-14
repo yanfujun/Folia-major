@@ -235,3 +235,25 @@ describe('experimental gate', () => {
         expect(allowed.experimental['omni.providers']).toHaveProperty('register');
     });
 });
+
+
+describe('player.layout experimental gate', () => {
+    it('requires the manifest opt-in and only exposes immutable reads in the main context', () => {
+        const undeclared = mod();
+        const denied = createFoliumClientApi(undeclared, {
+            context: 'main', internals: null, experimental: createFoliumExperimental(undeclared),
+        });
+        expect(() => denied.experimental['player.layout']).toThrow('experimental-not-declared:player.layout');
+        const optedIn = mod({ experimental: ['player.layout'] });
+        const api = createFoliumClientApi(optedIn, {
+            context: 'main', internals: null, experimental: createFoliumExperimental(optedIn),
+        });
+        const layout = api.experimental['player.layout'] as { get(): unknown };
+        expect(Object.keys(layout).sort()).toEqual(['get', 'subscribe']);
+        expect(Object.isFrozen(layout)).toBe(true);
+        expect(layout.get()).toBeNull();
+        expect(api.host.folium).toEqual({ major: 1, minor: 4 });
+        const exported = createFoliumClientApi(optedIn, { context: 'export', internals: null });
+        expect(() => exported.experimental['player.layout']).toThrow('experimental-unknown:player.layout');
+    });
+});
