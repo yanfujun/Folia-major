@@ -139,7 +139,7 @@ client 只能用相对路径 import 模组目录里的 `.mjs/.js`，**不能 imp
 | `depends` | 模组 id 或 `id@^1.2.3`（仅支持 `^` 与 `*`）。缺失、版本不符、成环或依赖未启用时，只有该依赖子图不加载 |
 | `permissions` | 见下表。未知权限直接拒绝 |
 | `embedOrigins` | `folium.ui.embed` 可以加载的 https origin（形如 `https://host[:port]`），需要 `net.embed` |
-| `experimental` | 选用的实验接口：`omni.providers`、`omni.hooks`、`ponder.targets` |
+| `experimental` | 选用的实验接口：`omni.providers`、`omni.hooks`、`ponder.targets`、`player.layout` |
 | `folia` | 宿主版本范围（空格分隔的比较式，支持 `>= > <= < = ^` 与 `*`）。**使用 `folium.internals` 时必填**；宿主版本不在范围内时加载器拒绝加载（`host-version-mismatch`） |
 
 | 权限 | 解锁 |
@@ -206,6 +206,7 @@ export default function activate(folium) {
 | `styles` | 模组 CSS，只针对公开 part | 稳定 |
 | `experimental['omni.providers']` | 在线音乐源 | 实验 |
 | `experimental['ponder.targets']` | 思索（应用内教程）目标 | 实验 |
+| `experimental['player.layout']` | 播放页只读布局快照（配合已有 stageLayers） | 实验 |
 
 ### 宿主托管容器
 
@@ -588,6 +589,44 @@ folium.experimental['omni.providers'].register({
 **建议**：别追求把界面画得像。用通用骨架勾出结构——一个 `surface` 面板、几个 `control` 按钮、几条 `rail`
 滑轨——再让字幕把意思讲清楚：每一步只讲一件事，用 `pointTo` 把字幕连到它讲的那个框，用 `highlight` 和
 `reveal` 标出「现在看这里」。这正是宿主思索的做法：骨架负责「在哪」，文字负责「是什么、为什么」。
+
+### player.layout（实验，只读）
+
+清单声明 `"experimental": ["player.layout"]`，主窗口中读取
+`folium.experimental['player.layout']`；导出窗口不可用。稳定 Folium 版本和 `FoliumStageContext` 不变。
+类型见 `src/mods/folium/playerLayout.ts`：
+
+- `get(): PlayerLayoutSnapshot | null`：播放页区域 `bounds`，以及原生控件和唤出区域 `obstacles`。
+  每项有 `id`、`kind: 'control' | 'reveal-area'`、`rect`；矩形为 viewport CSS px 的
+  `{ left, top, width, height }`，裁剪到播放页范围。快照深冻结，数值未变时引用不变。
+  非播放页或舞台已卸载时返回 `null`；静态歌词播放页仍然有原生控件，因此仍提供布局。
+- `subscribe(listener): disposer`：仅在几何变化后通知；动画、滚动、resize 共用 80ms 合并测量，
+  没有逐帧 React 更新。停用模组自动移除订阅；最后一个订阅取消或离开播放页后停止监听/测量。
+
+此接口不能修改原生控件、重排、隐藏或替换原生条目，也不提供原生 DOM。
+模组自己的完整组件仍挂在已有 `stageLayers` 的 `app.overlay` 槽位（需 `ui.stage`）；
+样式与交互由模组负责，通过现有 ShadowRoot 隔离，不增加另一套浮层渲染接口。
+
+```js
+export default function activate(folium) {
+  if (folium.env.context !== 'main') return;
+  const layout = folium.experimental['player.layout'];
+  folium.registries.stageLayers.register({
+    id: 'conversation', slot: 'app.overlay',
+    mount(container) {
+      // Mount your component and position only your own nodes from layout.get().
+      const render = () => positionOwnOverlay(container, layout.get());
+      const off = layout.subscribe(render);
+      render();
+      return off;
+    },
+  });
+}
+```
+
+避让应按矩形真实相交判断，不要把右侧面板所在的整列都视为禁区。
+返回按钮只保留实际点击区，较大的鼠标唤出区域仍能穿过模组内容捕获移动。
+`dev/folium/player-layout-demo` 提供无账号、无网络、可停用恢复的完整示例。
 
 ## internals（自由度出口）
 
